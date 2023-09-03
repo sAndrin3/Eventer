@@ -1,4 +1,6 @@
+using Auth.Extensions;
 using Event_Management.Data;
+using Event_Management.Extensions;
 using Event_Management.Services.Iservices;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,7 +22,19 @@ builder.Services.AddScoped<IEventService, EventService>();
 
 // AutoMapper
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+//authentication
+builder.AddAppAuthentication();
+
+//Adding Authorization options
+
+builder.addAuthorizationExtension();
+
+builder.AddSwaggenGenExtension();
+
+
 var app = builder.Build();
+
 
 
 // Configure the HTTP request pipeline.
@@ -32,8 +46,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.ApplyMigration();
 
 app.Run();

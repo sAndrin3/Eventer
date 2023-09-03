@@ -41,5 +41,37 @@ namespace Event_Management.Services.Iservices {
             return "User Updated Successfully";
         }
 
-}
+         public async Task<bool> RegisterUserForEventAsync(UserRegistration registration)
+    {
+        try
+        {
+     
+
+            // Add the user registration to the database
+            _context.UserRegistrations.Add(registration);
+            await _context.SaveChangesAsync();
+
+            return true; // Registration successful
+        }
+        catch (Exception)
+        {
+            
+            return false;
+        }
+    }
+
+        public async Task<IEnumerable<User>> GetUsersRegisteredForEventAsync(Guid eventId)
+        {
+            // Query  database to retrieve users registered for the specified event
+            var registeredUsers = await _context.UserRegistrations
+                .Where(ur => ur.EventId == eventId)
+                .Select(ur => ur.User)
+                .ToListAsync();
+
+            return registeredUsers;
+        }
+
+
+
+    }
 }

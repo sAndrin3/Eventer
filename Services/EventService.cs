@@ -1,3 +1,4 @@
+using System.Runtime.Serialization;
 using Event_Management.Data;
 using Event_Management.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -22,7 +23,19 @@ namespace Event_Management.Services.Iservices{
             return "Event deleted successfully";
         }
 
-        public async Task<IEnumerable<Event>> GetAllEventsAsync(string location)
+        public async Task<IEnumerable<Event>> GetAllEventsAsync(string? location)
+        {
+            IQueryable<Event> query = _context.Events;
+
+            if (!string.IsNullOrEmpty(location))
+            {
+                query = query.Where(e => e.Location == location);
+            }
+
+            return await query.ToListAsync();
+        }
+
+        public async Task<IEnumerable<Event>> GetAllEventsAsync()
         {
             return await _context.Events.ToListAsync();
         }
@@ -33,9 +46,9 @@ namespace Event_Management.Services.Iservices{
             return await _context.Events.Where(x=>x.Id==id).FirstOrDefaultAsync();
         }
 
-        public Task<Event> GetEventByIdAsync(Guid id)
+        public async Task<Event> GetEventByIdAsync(Guid id)
         {
-            throw new NotImplementedException();
+            return await _context.Events.FirstOrDefaultAsync(e => e.Id == id);
         }
 
         public async Task<string> UpdateEventAsync(Event newevent )
@@ -45,6 +58,42 @@ namespace Event_Management.Services.Iservices{
             return "Events updated successfully";
         }
 
+          public async Task<int> GetAvailableSlotsAsync(Guid eventId)
+        {
+            var @event = await _context.Events
+                .Include(e => e.Users) 
+                .FirstOrDefaultAsync(e => e.Id == eventId);
+
+            if (@event == null)
+            {
+                throw new NotFoundException("Event not found");
+            }
+
+            int availableSlots = @event.Capacity - @event.Users.Count;
+
+            return availableSlots;
+        }        
+
         
+    }
+
+    [Serializable]
+    internal class NotFoundException : Exception
+    {
+        public NotFoundException()
+        {
+        }
+
+        public NotFoundException(string? message) : base(message)
+        {
+        }
+
+        public NotFoundException(string? message, Exception? innerException) : base(message, innerException)
+        {
+        }
+
+        protected NotFoundException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
     }
 }

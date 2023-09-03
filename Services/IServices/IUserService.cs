@@ -16,6 +16,9 @@ namespace Event_Management.Services.Iservices{
 
         // Gets single user
         Task <User> GetUserByIdAsync(Guid id);
+        Task<bool> RegisterUserForEventAsync(UserRegistration registration);
+         Task<IEnumerable<User>> GetUsersRegisteredForEventAsync(Guid eventId);
+
         
     }
 }

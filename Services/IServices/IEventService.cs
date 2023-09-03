@@ -6,7 +6,9 @@ namespace Event_Management.Services.Iservices{
         Task<string> DeleteEventAsync(Event newevent);
         Task<string> UpdateEventAsync(Event newevent);
         Task<IEnumerable<Event>> GetAllEventsAsync(string location);
+        Task<IEnumerable<Event>> GetAllEventsAsync();
         Task<Event> GetEventByIdAsync(Guid id);
-       
+        Task<int> GetAvailableSlotsAsync(Guid eventId);
+        
     }
 }

@@ -14,6 +14,7 @@ namespace Jitu_Udemy.Controllers{
     public class UserController : ControllerBase{
         private readonly IMapper _mapper;
         private readonly IUserService _userService;
+        private Guid eventId;
 
         public UserController(IUserService service, IMapper mapper)
         {
@@ -74,5 +75,73 @@ namespace Jitu_Udemy.Controllers{
             return Ok(new UserSuccess(204, res));
 
         }
+
+        [HttpPost("RegisterForEvent/{eventId}")]
+        public async Task<IActionResult> RegisterForEvent([FromBody] UserRegistrationRequest request)
+        {
+            try
+            {
+      
+                var userRegistration = new UserRegistration
+                {
+                    EventId = eventId,
+                    
+                };
+
+                // Save the user registration record to your database
+                var registrationResult = await _userService.RegisterUserForEventAsync(userRegistration);
+
+                // Check if the registration was successful
+                if (registrationResult)
+                {
+                    return Ok(new UserSuccess(200, "User registered for the event successfully"));
+                }
+                else
+                {
+                    
+                    return BadRequest(new UserSuccess(400, "User registration failed"));
+                }
+            }
+            catch (Exception ex)
+            {
+               
+            
+                return StatusCode(500, new UserSuccess(500, ex.Message));
+            }
+        }
+
+        [HttpGet("{eventId}/RegisteredUsers")]
+        public async Task<ActionResult<IEnumerable<UserResponse>>> GetEventRegisteredUsers(Guid eventId)
+        {
+            try
+            {
+                // Retrieve the list of users registered for the specified event
+                var registeredUsers = await _userService.GetUsersRegisteredForEventAsync(eventId);
+
+                // Check if there are any registered users
+                if (registeredUsers == null || !registeredUsers.Any())
+                {
+                    return NotFound(new UserSuccess(404, "No users are registered for this event"));
+                }
+
+                // Map the registered users to UserResponse objects
+                var userResponses = _mapper.Map<IEnumerable<UserResponse>>(registeredUsers);
+
+                return Ok(userResponses);
+            }
+            catch (Exception ex)
+            {
+                
+                return StatusCode(500, new UserSuccess(500, ex.Message));
+            }
+        }
+
+
+
+
+    }
+
+    public class RegisterForEventRequest
+    {
     }
 }
