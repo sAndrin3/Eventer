@@ -7,10 +7,10 @@
         {
             builder.Services.AddAuthorization(options =>
             {
-                options.AddPolicy("Admin", policy =>
+                options.AddPolicy("Roles", policy =>
                 {
                     policy.RequireAuthenticatedUser();
-                    policy.RequireClaim("Role", "Admin");
+                    policy.RequireClaim("Roles", "admin");
                 });
             });
             return builder;

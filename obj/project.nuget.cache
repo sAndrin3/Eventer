@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "7VKtw/j8bwWaoW5HstGVwQk4y53c72288fVkrMTiVnp7p/+m/rI86HeFObntXL9oZzR6dYPEv113F/45uYm1mw==",
+  "dgSpecHash": "daI5VOrTufjqoL8x2hr2sk6MscTgC65iZv/K7MrWf1Vzl8yJWUzvQ4yDHWF+5UYaKvWStd3/DHjXynxZWPX1dg==",
   "success": true,
   "projectFilePath": "/home/petrolhead/Documents/Event Management/Event Management.csproj",
   "expectedPackageFiles": [
@@ -8,6 +8,7 @@
     "/home/petrolhead/.nuget/packages/automapper.extensions.microsoft.dependencyinjection/12.0.1/automapper.extensions.microsoft.dependencyinjection.12.0.1.nupkg.sha512",
     "/home/petrolhead/.nuget/packages/azure.core/1.24.0/azure.core.1.24.0.nupkg.sha512",
     "/home/petrolhead/.nuget/packages/azure.identity/1.6.0/azure.identity.1.6.0.nupkg.sha512",
+    "/home/petrolhead/.nuget/packages/bcrypt.net-next/4.0.3/bcrypt.net-next.4.0.3.nupkg.sha512",
     "/home/petrolhead/.nuget/packages/humanizer.core/2.14.1/humanizer.core.2.14.1.nupkg.sha512",
     "/home/petrolhead/.nuget/packages/microsoft.aspnetcore.authentication.jwtbearer/7.0.10/microsoft.aspnetcore.authentication.jwtbearer.7.0.10.nupkg.sha512",
     "/home/petrolhead/.nuget/packages/microsoft.aspnetcore.cryptography.internal/7.0.10/microsoft.aspnetcore.cryptography.internal.7.0.10.nupkg.sha512",

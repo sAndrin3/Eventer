@@ -9,6 +9,6 @@ namespace Event_Management.Services.Iservices{
         Task<IEnumerable<Event>> GetAllEventsAsync();
         Task<Event> GetEventByIdAsync(Guid id);
         Task<int> GetAvailableSlotsAsync(Guid eventId);
-        
+        Task<List<User>> GetEventRegisteredUsers(Guid id);
     }
 }

@@ -28,9 +28,12 @@ namespace Jitu_udemy.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")] 
+        [Authorize]
         public async Task<ActionResult<UserSuccess>> AddEvent(AddEvent newEvent)
         {
+            var role = User.Claims.FirstOrDefault(c => c.Type == "Roles").Value;
+            if(!string.IsNullOrWhiteSpace(role) && role == "admin")
+            {
             try
             {
                 var user = _mapper.Map<Event>(newEvent);
@@ -41,6 +44,9 @@ namespace Jitu_udemy.Controllers
             {
                 return BadRequest(new UserSuccess(400, ex.Message));
             }
+            
+        }
+        return BadRequest("You are not allowed");
         }
 
         [HttpGet("Location")]
@@ -72,48 +78,97 @@ namespace Jitu_udemy.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")] 
+        [Authorize] 
         public async Task<ActionResult<UserSuccess>> UpdateEvent(Guid id, AddEvent UpdatedEvent)
         {
-            var response = await _eventService.GetEventByIdAsync(id);
-            if (response == null)
+            var role = User.Claims.FirstOrDefault(c => c.Type == "Roles").Value;
+            if (!string.IsNullOrWhiteSpace(role) && role == "admin")
             {
-                return NotFound(new UserSuccess(404, "Event Not Found"));
+                try
+                {
+                    var response = await _eventService.GetEventByIdAsync(id);
+                    if (response == null)
+                    {
+                        return NotFound(new UserSuccess(404, "Event Not Found"));
+                    }
+
+                    // Update
+                    var updated = _mapper.Map(UpdatedEvent, response);
+                    var res = await _eventService.UpdateEventAsync(updated);
+                    return Ok(new UserSuccess(204, res));
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(new UserSuccess(400, ex.Message));
+                }
             }
-            //update
-            var updated = _mapper.Map(UpdatedEvent, response);
-            var res = await _eventService.UpdateEventAsync(updated);
-            return Ok(new UserSuccess(204, res));
+            else
+            {
+                
+                return BadRequest("You are not allowed");
+            }
         }
 
+
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize] 
         public async Task<ActionResult<UserSuccess>> DeleteEvent(Guid id)
         {
-            var response = await _eventService.GetEventByIdAsync(id);
+            var role = User.Claims.FirstOrDefault(c => c.Type == "Roles").Value;
+            if (!string.IsNullOrWhiteSpace(role) && role == "admin")
+            {
+                try
+                {
+                    var response = await _eventService.GetEventByIdAsync(id);
+                    if (response == null)
+                    {
+                        return NotFound(new UserSuccess(404, "Event Does Not Exist"));
+                    }
+
+                    // Delete
+                    var res = await _eventService.DeleteEventAsync(response);
+                    return Ok(new UserSuccess(204, res));
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(new UserSuccess(400, ex.Message));
+                }
+            }
+            else
+            {
+                
+                return BadRequest("You are not allowed");
+            }
+        }
+
+        [HttpGet("{eventId}/RegisteredUsers")]
+        public async Task<ActionResult<IEnumerable<UserResponse>>> GetEventRegisteredUsers(Guid eventId)
+        {
+            var response = await _eventService.GetEventByIdAsync(eventId);
             if (response == null)
             {
                 return NotFound(new UserSuccess(404, "Event Does Not Exist"));
             }
-            //delete
-            var res = await _eventService.DeleteEventAsync(response);
-            return Ok(new UserSuccess(204, res));
+            var usersregistered = await _eventService.GetEventRegisteredUsers(eventId);
+            var users = _mapper.Map<IEnumerable<UserResponse>>(usersregistered);
+            return Ok(users);
         }
+
 
         [HttpGet("{id}/AvailableSlots")]
         public async Task<ActionResult<int>> GetAvailableSlots(Guid id)
         {
-            var eventResponse = await _eventService.GetEventByIdAsync(id);
+            return await _eventService.GetAvailableSlotsAsync(id);
 
-            if (eventResponse == null)
-            {
-                return NotFound(new UserSuccess(404, "Event Not Found"));
-            }
+            // if (eventResponse == null)
+            // {
+            //     return NotFound(new UserSuccess(404, "Event Not Found"));
+            // }
 
-            // Calculate available slots based on event's capacity and the number of registered users
-            int availableSlots = eventResponse.Capacity - eventResponse.Users.Count; 
+            // // Calculate available slots based on event's capacity and the number of registered users
+            // // int availableSlots = eventResponse.Capacity - eventResponse.Users.Count; 
 
-            return Ok(availableSlots);
+            // return Ok(eventResponse);
         }
 
 

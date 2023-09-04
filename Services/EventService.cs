@@ -1,6 +1,7 @@
 using System.Runtime.Serialization;
 using Event_Management.Data;
 using Event_Management.Entities;
+using Event_Management.responses;
 using Microsoft.EntityFrameworkCore;
 
 namespace Event_Management.Services.Iservices{
@@ -60,19 +61,35 @@ namespace Event_Management.Services.Iservices{
 
           public async Task<int> GetAvailableSlotsAsync(Guid eventId)
         {
-            var @event = await _context.Events
-                .Include(e => e.Users) 
-                .FirstOrDefaultAsync(e => e.Id == eventId);
+            var events = await _context.Events.Where(u=>u.Id == eventId)
 
-            if (@event == null)
-            {
-                throw new NotFoundException("Event not found");
-            }
+             .Select(x=>new Numbers(){
 
-            int availableSlots = @event.Capacity - @event.Users.Count;
+                NumberOfUsers=x.Users.Count
 
-            return availableSlots;
-        }        
+             }).FirstOrDefaultAsync();
+
+             var eventRes= await _context.Events.Where(u=>u.Id==eventId).FirstOrDefaultAsync();
+
+             var totalBooking = events.NumberOfUsers;
+             System.Console.WriteLine(totalBooking);
+             System.Console.WriteLine(eventRes.Name);
+
+            var availableslots = eventRes.Capacity - totalBooking;
+
+            return availableslots;
+
+            
+
+        
+        }
+        
+            public async Task<List<User>> GetEventRegisteredUsers(Guid id)
+        {
+            var result = await _context.Events.Include(x => x.Users).FirstOrDefaultAsync(x => x.Id == id);
+            return result.Users;
+        }
+
 
         
     }

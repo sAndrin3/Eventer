@@ -83,3 +83,4 @@
 /home/petrolhead/Documents/Event Management/bin/Debug/net7.0/Microsoft.Extensions.Identity.Core.dll
 /home/petrolhead/Documents/Event Management/bin/Debug/net7.0/Microsoft.Extensions.Identity.Stores.dll
 /home/petrolhead/Documents/Event Management/bin/Debug/net7.0/Microsoft.Extensions.Options.dll
+/home/petrolhead/Documents/Event Management/bin/Debug/net7.0/BCrypt.Net-Next.dll

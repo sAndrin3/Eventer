@@ -6,39 +6,56 @@ using Event_Management.Responses;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Mvc;
 using RouteAttribute = Microsoft.AspNetCore.Mvc.RouteAttribute;
+using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using Event_Management.Request;
 
-namespace Jitu_Udemy.Controllers{
+
+namespace Jitu_Udemy.Controllers
+{
     [Route("api/[controller]")]
     [ApiController]
 
-    public class UserController : ControllerBase{
+    public class UserController : ControllerBase
+    {
         private readonly IMapper _mapper;
         private readonly IUserService _userService;
+        private readonly IConfiguration _config;
         private Guid eventId;
+        private IConfiguration? configuration;
 
-        public UserController(IUserService service, IMapper mapper)
+        public UserController(IUserService service, IMapper mapper, IConfiguration configuration)
         {
             _mapper = mapper;
             _userService = service;
+            _config = configuration;
         }
-        [HttpPost]
-        public async Task<ActionResult<UserSuccess>> AddUser(AddUser newUser){
+        [HttpPost("adduser")]
+        public async Task<ActionResult<UserSuccess>> AddUser(AddUser newUser)
+        {
             var user = _mapper.Map<User>(newUser);
             var res = await _userService.AddUserAsync(user);
-            return CreatedAtAction(nameof(AddUser),new UserSuccess(201, res));
+            return CreatedAtAction(nameof(AddUser), new UserSuccess(201, res));
         }
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<UserResponse>>> GetAllUsers(){
+        public async Task<ActionResult<IEnumerable<UserEventDto>>> GetAllUsers()
+        {
             var response = await _userService.GetAllUsersAsync();
-            var users = _mapper.Map<IEnumerable<UserResponse>>(response);
-            return Ok(users);
+            // var users = _mapper.Map<IEnumerable<UserResponse>>(response);
+            return Ok(response);
 
         }
 
-         [HttpGet("{id}")]
-        public async Task<ActionResult<UserResponse>> GetUser(Guid id){
+        [HttpGet("{id}")]
+        public async Task<ActionResult<UserResponse>> GetUser(Guid id)
+        {
             var response = await _userService.GetUserByIdAsync(id);
-            if(response == null){
+            if (response == null)
+            {
                 return NotFound(new UserSuccess(404, "User Does Not Exist"));
             }
             var user = _mapper.Map<UserResponse>(response);
@@ -61,7 +78,7 @@ namespace Jitu_Udemy.Controllers{
 
         }
 
-         [HttpDelete("{id}")]
+        [HttpDelete("{id}")]
         public async Task<ActionResult<UserSuccess>> DeleteUser(Guid id)
         {
             var response = await _userService.GetUserByIdAsync(id);
@@ -70,72 +87,109 @@ namespace Jitu_Udemy.Controllers{
                 return NotFound(new UserSuccess(404, "User Does Not Exist"));
             }
             //delete
-           
+
             var res = await _userService.DeleteUserAsync(response);
             return Ok(new UserSuccess(204, res));
 
         }
 
         [HttpPost("RegisterForEvent/{eventId}")]
-        public async Task<IActionResult> RegisterForEvent([FromBody] UserRegistrationRequest request)
+        public async Task<ActionResult<string>> RegisterForEvent( NewBooking newBooking)
         {
             try
             {
-      
-                var userRegistration = new UserRegistration
-                {
-                    EventId = eventId,
-                    
-                };
+
 
                 // Save the user registration record to your database
-                var registrationResult = await _userService.RegisterUserForEventAsync(userRegistration);
+                var registrationResult = await _userService.RegisterUserForEventAsync(newBooking);
 
                 // Check if the registration was successful
-                if (registrationResult)
+                if (registrationResult != null) 
                 {
                     return Ok(new UserSuccess(200, "User registered for the event successfully"));
                 }
                 else
                 {
-                    
+
                     return BadRequest(new UserSuccess(400, "User registration failed"));
                 }
             }
             catch (Exception ex)
             {
-               
-            
+
+
                 return StatusCode(500, new UserSuccess(500, ex.Message));
             }
         }
 
-        [HttpGet("{eventId}/RegisteredUsers")]
-        public async Task<ActionResult<IEnumerable<UserResponse>>> GetEventRegisteredUsers(Guid eventId)
+    
+
+
+        [HttpPost("registerUser")]
+
+        public async Task<ActionResult<string>> registerUser(AddUser addUser)
         {
-            try
-            {
-                // Retrieve the list of users registered for the specified event
-                var registeredUsers = await _userService.GetUsersRegisteredForEventAsync(eventId);
-
-                // Check if there are any registered users
-                if (registeredUsers == null || !registeredUsers.Any())
-                {
-                    return NotFound(new UserSuccess(404, "No users are registered for this event"));
-                }
-
-                // Map the registered users to UserResponse objects
-                var userResponses = _mapper.Map<IEnumerable<UserResponse>>(registeredUsers);
-
-                return Ok(userResponses);
-            }
-            catch (Exception ex)
-            {
-                
-                return StatusCode(500, new UserSuccess(500, ex.Message));
-            }
+            var newUser = _mapper.Map<User>(addUser);
+            //Hash password
+            newUser.Password = BCrypt.Net.BCrypt.HashPassword(newUser.Password);
+            //newUser.Role = "Admin";
+            var res = await _userService.RegisterUser(newUser);
+            return CreatedAtAction(nameof(registerUser), res);
         }
 
+        [HttpPost("login")]
+
+        public async Task<ActionResult<string>> registerUser(LoginUser logUser)
+        {
+            //check if user with that email exists
+
+            var existingUser = await _userService.GetUserByEmail(logUser.Email);
+            if (existingUser == null)
+            {
+                return NotFound("Invalid Credential");
+            }
+            // users exists
+
+            var isPasswordValid = BCrypt.Net.BCrypt.Verify(logUser.Password, existingUser.Password);
+            if (!isPasswordValid)
+            {
+                return NotFound("Invalid Credential");
+            }
+
+            //i provided the right credentials
+
+            //create Token
+            var token = CreateToken(existingUser);
+
+            return Ok(token);
+        }
+
+
+        private string CreateToken(User user)
+        {
+            //key
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config.GetValue<string>("TokenSecurity:SecretKey")));
+            //Signing Credentials
+            var cred = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            //payload-data
+
+            List<Claim> claims = new List<Claim>();
+            claims.Add(new Claim("Names", user.Name));
+            claims.Add(new Claim("Sub", user.Id.ToString()));
+            claims.Add(new Claim("Roles", user.Roles));
+
+            //create Token 
+            var tokenGenerated = new JwtSecurityToken(
+                _config["TokenSecurity:Issuer"],
+                _config["TokenSecurity:Audience"],
+                signingCredentials: cred,
+                claims: claims,
+                expires: DateTime.UtcNow.AddHours(1)
+                );
+
+            var token = new JwtSecurityTokenHandler().WriteToken(tokenGenerated);
+            return token;
+        }
 
 
 

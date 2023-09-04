@@ -1,4 +1,6 @@
 using Event_Management.Entities;
+using Event_Management.Requests;
+using Event_Management.Responses;
 
 namespace Event_Management.Services.Iservices{
     public interface IUserService{
@@ -12,12 +14,16 @@ namespace Event_Management.Services.Iservices{
         Task<string> DeleteUserAsync(User user);
 
         //Get All USers
-        Task<IEnumerable<User>> GetAllUsersAsync();
+        Task<IEnumerable<UserEventDto>> GetAllUsersAsync();
 
         // Gets single user
         Task <User> GetUserByIdAsync(Guid id);
-        Task<bool> RegisterUserForEventAsync(UserRegistration registration);
+        Task<string> RegisterUserForEventAsync(NewBooking newBooking);
          Task<IEnumerable<User>> GetUsersRegisteredForEventAsync(Guid eventId);
+         Task<string> RegisterUser(User user);
+
+        Task<User> GetUserByEmail(string email);   
+         
 
         
     }
